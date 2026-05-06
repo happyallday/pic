@@ -173,6 +173,10 @@ public partial class App : System.Windows.Application
             var hWnd = picker.PickWindow();
             if (hWnd == IntPtr.Zero) return;
 
+            var title = Pic.Capture.ScrollingCapture.GetWindowTitle(hWnd);
+            _notifyIcon?.ShowBalloonTip(1000, "Pic", $"Scrolling: {title}",
+                System.Windows.Forms.ToolTipIcon.Info);
+
             var sc = new Pic.Capture.ScrollingCapture();
             var bitmap = sc.CaptureScroll(hWnd);
             HandleCaptureResult(bitmap);
@@ -185,11 +189,20 @@ public partial class App : System.Windows.Application
 
     public void CaptureDelayed()
     {
-        Task.Run(async () =>
+        System.Threading.Thread.Sleep(300);
+        var overlay = new Pic.Capture.CountdownOverlay();
+        overlay.Show(_settings.DelaySeconds);
+
+        try
         {
-            await Task.Delay(TimeSpan.FromSeconds(_settings.DelaySeconds));
-            Dispatcher.Invoke(() => FullScreenWithDelay());
-        });
+            var capture = new Pic.Capture.ScreenCapture();
+            var bitmap = capture.CaptureFullScreen();
+            HandleCaptureResult(bitmap);
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Capture failed: {ex.Message}\n\n{ex.StackTrace}", "Pic", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void FullScreenWithDelay()

@@ -23,12 +23,23 @@ public partial class SettingsWindow : Window
         ChkAutoCopy.IsChecked = settings.AutoCopyToClipboard;
         ChkOpenEditor.IsChecked = settings.OpenEditorAfterCapture;
         ChkShowToolbar.IsChecked = settings.ShowToolbarOnStartup;
+        TxtDelaySeconds.Text = settings.DelaySeconds.ToString();
+        TxtRecordDir.Text = settings.RecordingsDirectory;
 
         foreach (ComboBoxItem item in CmbFormat.Items)
         {
             if (item.Tag?.ToString() == settings.DefaultImageFormat.ToString())
             {
                 CmbFormat.SelectedItem = item;
+                break;
+            }
+        }
+
+        foreach (ComboBoxItem item in CmbFrameRate.Items)
+        {
+            if (item.Tag?.ToString() == settings.RecordingFrameRate.ToString())
+            {
+                CmbFrameRate.SelectedItem = item;
                 break;
             }
         }
@@ -181,16 +192,40 @@ public partial class SettingsWindow : Window
         }
     }
 
+    private void BrowseRecordDir_Click(object sender, RoutedEventArgs e)
+    {
+        using var dialog = new System.Windows.Forms.FolderBrowserDialog
+        {
+            Description = "Select save directory for recordings",
+            SelectedPath = _settings.RecordingsDirectory,
+            ShowNewFolderButton = true
+        };
+        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        {
+            TxtRecordDir.Text = dialog.SelectedPath;
+        }
+    }
+
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
         _settings.SaveDirectory = TxtSaveDir.Text;
         _settings.AutoCopyToClipboard = ChkAutoCopy.IsChecked == true;
         _settings.OpenEditorAfterCapture = ChkOpenEditor.IsChecked == true;
         _settings.ShowToolbarOnStartup = ChkShowToolbar.IsChecked == true;
+        _settings.RecordingsDirectory = TxtRecordDir.Text;
+
+        if (int.TryParse(TxtDelaySeconds.Text, out var delay) && delay > 0 && delay <= 30)
+            _settings.DelaySeconds = delay;
 
         if (CmbFormat.SelectedItem is ComboBoxItem item && item.Tag != null)
         {
             _settings.DefaultImageFormat = Enum.Parse<ImageFormat>(item.Tag.ToString()!);
+        }
+
+        if (CmbFrameRate.SelectedItem is ComboBoxItem fpsItem && fpsItem.Tag != null)
+        {
+            if (int.TryParse(fpsItem.Tag.ToString(), out var fps))
+                _settings.RecordingFrameRate = fps;
         }
 
         SettingsSaved?.Invoke(this, _settings);
