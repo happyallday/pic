@@ -27,7 +27,7 @@ public static partial class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
 
-    [LibraryImport(User32, SetLastError = true)]
+    [LibraryImport(User32, SetLastError = true, EntryPoint = "GetWindowTextW")]
     internal static partial int GetWindowText(IntPtr hWnd, nint lpString, int nMaxCount);
 
     [LibraryImport(User32)]
@@ -37,7 +37,7 @@ public static partial class NativeMethods
     [LibraryImport(User32)]
     internal static partial IntPtr GetWindow(IntPtr hWnd, uint uCmd);
 
-    [LibraryImport(User32)]
+    [LibraryImport(User32, EntryPoint = "GetWindowLongW")]
     internal static partial int GetWindowLong(IntPtr hWnd, int nIndex);
 
     [LibraryImport(User32)]
