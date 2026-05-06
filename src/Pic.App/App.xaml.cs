@@ -151,19 +151,33 @@ public partial class App : System.Windows.Application
 
     public void CaptureRegion()
     {
-        System.Threading.Thread.Sleep(300);
-        var selector = new Pic.Capture.RegionSelector();
-        var bitmap = selector.SelectAndCapture();
-        HandleCaptureResult(bitmap);
+        try
+        {
+            System.Threading.Thread.Sleep(300);
+            var selector = new Pic.Capture.RegionSelector();
+            var bitmap = selector.SelectAndCapture();
+            HandleCaptureResult(bitmap);
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Capture failed: {ex.Message}\n\n{ex.StackTrace}", "Pic", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     public void CaptureScrolling()
     {
-        System.Threading.Thread.Sleep(300);
-        var hWnd = Pic.Capture.NativeMethods.GetForegroundWindow();
-        var sc = new Pic.Capture.ScrollingCapture();
-        var bitmap = sc.CaptureScroll(hWnd);
-        HandleCaptureResult(bitmap);
+        try
+        {
+            System.Threading.Thread.Sleep(300);
+            var hWnd = Pic.Capture.NativeMethods.GetForegroundWindow();
+            var sc = new Pic.Capture.ScrollingCapture();
+            var bitmap = sc.CaptureScroll(hWnd);
+            HandleCaptureResult(bitmap);
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Capture failed: {ex.Message}\n\n{ex.StackTrace}", "Pic", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     public void CaptureDelayed()
@@ -177,9 +191,16 @@ public partial class App : System.Windows.Application
 
     private void FullScreenWithDelay()
     {
-        var capture = new Pic.Capture.ScreenCapture();
-        var bitmap = capture.CaptureFullScreen();
-        HandleCaptureResult(bitmap);
+        try
+        {
+            var capture = new Pic.Capture.ScreenCapture();
+            var bitmap = capture.CaptureFullScreen();
+            HandleCaptureResult(bitmap);
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Capture failed: {ex.Message}\n\n{ex.StackTrace}", "Pic", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void CaptureWithResult(Func<System.Drawing.Bitmap> captureFunc)
@@ -194,7 +215,7 @@ public partial class App : System.Windows.Application
         }
         catch (Exception ex)
         {
-            System.Windows.MessageBox.Show($"Capture failed: {ex.Message}", "Pic", MessageBoxButton.OK, MessageBoxImage.Error);
+            System.Windows.MessageBox.Show($"Capture failed: {ex.Message}\n\n{ex.StackTrace}", "Pic", MessageBoxButton.OK, MessageBoxImage.Error);
             bitmap?.Dispose();
         }
     }
@@ -203,13 +224,10 @@ public partial class App : System.Windows.Application
     {
         if (bitmap == null) return;
 
+        try { CopyToClipboard(bitmap); } catch { }
+
         try
         {
-            if (_settings.AutoCopyToClipboard)
-            {
-                CopyToClipboard(bitmap);
-            }
-
             if (_settings.OpenEditorAfterCapture)
             {
                 OpenEditor(bitmap);
@@ -222,21 +240,40 @@ public partial class App : System.Windows.Application
         }
         catch (Exception ex)
         {
-            System.Windows.MessageBox.Show($"Error: {ex.Message}", "Pic", MessageBoxButton.OK, MessageBoxImage.Error);
-            bitmap.Dispose();
+            System.Windows.MessageBox.Show($"Error: {ex.Message}\n\n{ex.StackTrace}", "Pic", MessageBoxButton.OK, MessageBoxImage.Error);
+            try { bitmap.Dispose(); } catch { }
         }
     }
 
     private void OpenEditor(System.Drawing.Bitmap bitmap)
     {
-        var bitmapSource = ConvertToBitmapSource(bitmap);
-        bitmap.Dispose();
+        BitmapSource bitmapSource;
+        try
+        {
+            bitmapSource = ConvertToBitmapSource(bitmap);
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Bitmap conversion failed: {ex.Message}\n\n{ex.StackTrace}", "Pic", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+        finally
+        {
+            bitmap.Dispose();
+        }
 
         Dispatcher.Invoke(() =>
         {
-            var editor = new Pic.Editor.ImageEditorWindow(bitmapSource);
-            editor.Show();
-            editor.Activate();
+            try
+            {
+                var editor = new Pic.Editor.ImageEditorWindow(bitmapSource);
+                editor.Show();
+                editor.Activate();
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Editor failed: {ex.Message}\n\n{ex.StackTrace}", "Pic", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         });
     }
 
