@@ -40,7 +40,18 @@ public partial class ImageEditorCanvas : Canvas
     private readonly Stack<UIElement> _undoStack = new();
     private readonly Stack<UIElement> _redoStack = new();
 
-    public ImageSource? BackgroundImage { get; set; }
+    private ImageSource? _backgroundImage;
+
+    public ImageSource? BackgroundImage
+    {
+        get => _backgroundImage;
+        set
+        {
+            _backgroundImage = value;
+            if (value != null)
+                Background = new ImageBrush(value);
+        }
+    }
 
     public event EventHandler? StateChanged;
 
@@ -110,16 +121,6 @@ public partial class ImageEditorCanvas : Canvas
 
         var rtb = new RenderTargetBitmap(
             (int)bounds.Width, (int)bounds.Height, 96, 96, PixelFormats.Pbgra32);
-
-        DrawingVisual dv = new();
-        using (var ctx = dv.RenderOpen())
-        {
-            if (BackgroundImage != null)
-            {
-                ctx.DrawImage(BackgroundImage, bounds);
-            }
-        }
-        rtb.Render(dv);
 
         rtb.Render(this);
 
