@@ -360,6 +360,17 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        if (!Pic.Recorder.ScreenRecorder.IsFFmpegAvailable())
+        {
+            System.Windows.MessageBox.Show(
+                "FFmpeg is required for screen recording.\n\nPlease install FFmpeg and add it to your PATH.\nDownload: https://ffmpeg.org/download.html",
+                "Pic - FFmpeg Required", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        try
+        {
+
         System.Threading.Thread.Sleep(300);
 
         var selector = new Pic.Capture.RegionSelector();
@@ -387,6 +398,11 @@ public partial class App : System.Windows.Application
                     System.Windows.Forms.ToolTipIcon.Info));
         };
         _recorder.Start();
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Recording failed: {ex.Message}\n\n{ex.StackTrace}", "Pic", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void UpdateHotkeyRegistration()

@@ -141,9 +141,14 @@ public class ScrollingCapture
 
     private static void SendScrollDown(IntPtr hWnd)
     {
+        // Send WM_MOUSEWHEEL (most apps respond to this)
         const int WM_MOUSEWHEEL = 0x020A;
-        var wParam = (IntPtr)(unchecked((int)0xFF880000));
-        PostMessage(hWnd, WM_MOUSEWHEEL, wParam, IntPtr.Zero);
+        PostMessage(hWnd, WM_MOUSEWHEEL, (IntPtr)unchecked((int)0xFF880000), IntPtr.Zero);
+
+        // Also send WM_VSCROLL as fallback (some apps need it)
+        const int WM_VSCROLL = 0x0115;
+        const int SB_LINEDOWN = 1;
+        PostMessage(hWnd, WM_VSCROLL, (IntPtr)SB_LINEDOWN, IntPtr.Zero);
     }
 
     public static string GetWindowTitle(IntPtr hWnd)

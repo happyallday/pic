@@ -18,6 +18,14 @@ public partial class ImageEditorWindow : Window
     public ImageEditorWindow(BitmapSource? image = null)
     {
         InitializeComponent();
+        DataContext = this;
+
+        UndoCommand = new RelayCommand(() => EditorCanvas.Undo());
+        RedoCommand = new RelayCommand(() => EditorCanvas.Redo());
+        SaveCommand = new RelayCommand(SaveScreenshot);
+        CopyCommand = new RelayCommand(CopyScreenshot);
+        CloseCommand = new RelayCommand(Close);
+
         _originalImage = image;
 
         _toolButtons["Pointer"] = BtnPointer;
@@ -46,6 +54,12 @@ public partial class ImageEditorWindow : Window
             }
         };
     }
+
+    public ICommand UndoCommand { get; private set; } = null!;
+    public ICommand RedoCommand { get; private set; } = null!;
+    public ICommand SaveCommand { get; private set; } = null!;
+    public ICommand CopyCommand { get; private set; } = null!;
+    public ICommand CloseCommand { get; private set; } = null!;
 
     private void ToolButton_Click(object sender, RoutedEventArgs e)
     {
@@ -139,7 +153,7 @@ public partial class ImageEditorWindow : Window
     private void UndoButton_Click(object sender, RoutedEventArgs e) => EditorCanvas.Undo();
     private void RedoButton_Click(object sender, RoutedEventArgs e) => EditorCanvas.Redo();
 
-    private void SaveButton_Click(object sender, RoutedEventArgs e)
+    private void SaveScreenshot()
     {
         var dialog = new SaveFileDialog
         {
@@ -165,12 +179,16 @@ public partial class ImageEditorWindow : Window
         }
     }
 
-    private void CopyButton_Click(object sender, RoutedEventArgs e)
+    private void SaveButton_Click(object sender, RoutedEventArgs e) => SaveScreenshot();
+
+    private void CopyScreenshot()
     {
         var bitmap = EditorCanvas.RenderToBitmap();
         Clipboard.SetImage(bitmap);
         Close();
     }
+
+    private void CopyButton_Click(object sender, RoutedEventArgs e) => CopyScreenshot();
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
 

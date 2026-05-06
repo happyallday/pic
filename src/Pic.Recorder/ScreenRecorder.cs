@@ -4,6 +4,28 @@ namespace Pic.Recorder;
 
 public class ScreenRecorder : IDisposable
 {
+    public static bool IsFFmpegAvailable()
+    {
+        try
+        {
+            using var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "ffmpeg",
+                Arguments = "-version",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            });
+            process?.WaitForExit(5000);
+            return process?.ExitCode == 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private bool _isRecording;
     private CancellationTokenSource? _cts;
     private Task? _recordingTask;
