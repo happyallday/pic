@@ -17,13 +17,22 @@ public partial class App : System.Windows.Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        EnsureSingleInstance();
-        CreateTrayIcon();
-        _hotkeyManager = new HotkeyManager();
-        RegisterHotkeys();
+        try
+        {
+            EnsureSingleInstance();
+            CreateTrayIcon();
+            _hotkeyManager = new HotkeyManager();
+            RegisterHotkeys();
 
-        if (_settings.ShowToolbarOnStartup)
-            ShowToolbar();
+            if (_settings.ShowToolbarOnStartup)
+                ShowToolbar();
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Startup failed: {ex.Message}", "Pic",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown(1);
+        }
     }
 
     private void EnsureSingleInstance()
@@ -142,8 +151,7 @@ public partial class App : System.Windows.Application
 
     public void CaptureRegion()
     {
-        System.Windows.Forms.Application.DoEvents();
-        System.Threading.Thread.Sleep(200);
+        System.Threading.Thread.Sleep(300);
         var selector = new Pic.Capture.RegionSelector();
         var bitmap = selector.SelectAndCapture();
         HandleCaptureResult(bitmap);
@@ -151,7 +159,6 @@ public partial class App : System.Windows.Application
 
     public void CaptureScrolling()
     {
-        System.Windows.Forms.Application.DoEvents();
         System.Threading.Thread.Sleep(300);
         var hWnd = Pic.Capture.NativeMethods.GetForegroundWindow();
         var sc = new Pic.Capture.ScrollingCapture();
@@ -177,8 +184,7 @@ public partial class App : System.Windows.Application
 
     private void CaptureWithResult(Func<System.Drawing.Bitmap> captureFunc)
     {
-        System.Windows.Forms.Application.DoEvents();
-        System.Threading.Thread.Sleep(200);
+        System.Threading.Thread.Sleep(300);
 
         System.Drawing.Bitmap? bitmap = null;
         try
@@ -314,7 +320,6 @@ public partial class App : System.Windows.Application
             return;
         }
 
-        System.Windows.Forms.Application.DoEvents();
         System.Threading.Thread.Sleep(300);
 
         var selector = new Pic.Capture.RegionSelector();
