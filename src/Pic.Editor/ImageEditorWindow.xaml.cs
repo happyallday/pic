@@ -132,7 +132,8 @@ public partial class ImageEditorWindow : Window
 
     private void ThicknessSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
-        EditorCanvas.SetThickness(e.NewValue);
+        if (EditorCanvas != null)
+            EditorCanvas.SetThickness(e.NewValue);
     }
 
     private void UndoButton_Click(object sender, RoutedEventArgs e) => EditorCanvas.Undo();
