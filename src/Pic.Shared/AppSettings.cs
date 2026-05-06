@@ -9,6 +9,7 @@ public class AppSettings
     public int DelaySeconds { get; set; } = 3;
     public bool AutoCopyToClipboard { get; set; } = true;
     public bool OpenEditorAfterCapture { get; set; } = true;
+    public bool EditorTopmost { get; set; } = false;
     public bool RunOnStartup { get; set; } = false;
     public bool ShowToolbarOnStartup { get; set; } = true;
     public Dictionary<CaptureMode, string> Hotkeys { get; set; } = new()

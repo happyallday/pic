@@ -15,10 +15,11 @@ public partial class ImageEditorWindow : Window
     private Popup? _colorPopup;
     private bool _popupOpen;
 
-    public ImageEditorWindow(BitmapSource? image = null)
+    public ImageEditorWindow(BitmapSource? image = null, bool topmost = false)
     {
         InitializeComponent();
         DataContext = this;
+        Topmost = topmost;
 
         UndoCommand = new RelayCommand(() => EditorCanvas.Undo());
         RedoCommand = new RelayCommand(() => EditorCanvas.Redo());

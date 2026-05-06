@@ -22,9 +22,12 @@ public partial class SettingsWindow : Window
         TxtSaveDir.Text = settings.SaveDirectory;
         ChkAutoCopy.IsChecked = settings.AutoCopyToClipboard;
         ChkOpenEditor.IsChecked = settings.OpenEditorAfterCapture;
+        ChkEditorTopmost.IsChecked = settings.EditorTopmost;
         ChkShowToolbar.IsChecked = settings.ShowToolbarOnStartup;
         TxtDelaySeconds.Text = settings.DelaySeconds.ToString();
         TxtRecordDir.Text = settings.RecordingsDirectory;
+        SldJpegQuality.Value = settings.JpegQuality;
+        LblJpegQuality.Text = settings.JpegQuality.ToString();
 
         foreach (ComboBoxItem item in CmbFormat.Items)
         {
@@ -206,13 +209,20 @@ public partial class SettingsWindow : Window
         }
     }
 
+    private void SldJpegQuality_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        LblJpegQuality.Text = ((int)e.NewValue).ToString();
+    }
+
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
         _settings.SaveDirectory = TxtSaveDir.Text;
         _settings.AutoCopyToClipboard = ChkAutoCopy.IsChecked == true;
         _settings.OpenEditorAfterCapture = ChkOpenEditor.IsChecked == true;
+        _settings.EditorTopmost = ChkEditorTopmost.IsChecked == true;
         _settings.ShowToolbarOnStartup = ChkShowToolbar.IsChecked == true;
         _settings.RecordingsDirectory = TxtRecordDir.Text;
+        _settings.JpegQuality = (int)SldJpegQuality.Value;
 
         if (int.TryParse(TxtDelaySeconds.Text, out var delay) && delay > 0 && delay <= 30)
             _settings.DelaySeconds = delay;

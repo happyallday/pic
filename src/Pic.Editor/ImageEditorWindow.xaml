@@ -5,8 +5,7 @@
         Title="Pic - Image Editor"
         Width="1024" Height="768"
         WindowStartupLocation="CenterScreen"
-        WindowState="Maximized"
-        Topmost="True">
+        WindowState="Maximized">
     <Window.InputBindings>
         <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoCommand}" />
         <KeyBinding Key="Y" Modifiers="Control" Command="{Binding RedoCommand}" />

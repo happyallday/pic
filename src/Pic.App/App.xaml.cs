@@ -195,22 +195,8 @@ public partial class App : System.Windows.Application
 
         try
         {
-            var capture = new Pic.Capture.ScreenCapture();
-            var bitmap = capture.CaptureFullScreen();
-            HandleCaptureResult(bitmap);
-        }
-        catch (Exception ex)
-        {
-            System.Windows.MessageBox.Show($"Capture failed: {ex.Message}\n\n{ex.StackTrace}", "Pic", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
-    }
-
-    private void FullScreenWithDelay()
-    {
-        try
-        {
-            var capture = new Pic.Capture.ScreenCapture();
-            var bitmap = capture.CaptureFullScreen();
+            var selector = new Pic.Capture.RegionSelector();
+            var bitmap = selector.SelectAndCapture();
             HandleCaptureResult(bitmap);
         }
         catch (Exception ex)
@@ -282,7 +268,7 @@ public partial class App : System.Windows.Application
         {
             try
             {
-                var editor = new Pic.Editor.ImageEditorWindow(bitmapSource);
+                var editor = new Pic.Editor.ImageEditorWindow(bitmapSource, _settings.EditorTopmost);
                 editor.Show();
                 editor.Activate();
             }

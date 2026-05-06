@@ -32,8 +32,16 @@
                                 <ComboBoxItem Content="BMP" Tag="Bmp"/>
                             </ComboBox>
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,4">
+                            <TextBlock Text="JPEG Quality:" Width="100" VerticalAlignment="Center"/>
+                            <Slider x:Name="SldJpegQuality" Width="150" Minimum="10" Maximum="100" Value="90"
+                                    TickFrequency="10" IsSnapToTickEnabled="True"
+                                    ValueChanged="SldJpegQuality_ValueChanged"/>
+                            <TextBlock x:Name="LblJpegQuality" Width="30" Text="90" VerticalAlignment="Center" Margin="4,0"/>
+                        </StackPanel>
                         <CheckBox x:Name="ChkAutoCopy" Content="Auto copy to clipboard" Margin="0,4"/>
                         <CheckBox x:Name="ChkOpenEditor" Content="Open editor after capture" Margin="0,4"/>
+                        <CheckBox x:Name="ChkEditorTopmost" Content="Editor always on top" Margin="0,4"/>
                     </StackPanel>
                 </GroupBox>
 
