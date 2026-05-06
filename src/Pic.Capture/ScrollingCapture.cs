@@ -7,54 +7,116 @@ public class ScrollingCapture
 {
     public Bitmap? CaptureScroll(IntPtr hWnd, int maxScrolls = 20)
     {
-        NativeMethods.GetWindowRect(hWnd, out var rect);
-        if (rect.Width <= 0 || rect.Height <= 0)
+        if (!NativeMethods.GetWindowRect(hWnd, out var winRect))
+            return null;
+        if (winRect.Width <= 0 || winRect.Height <= 0)
             return null;
 
-        var images = new List<Bitmap>();
-        using var firstShot = new ScreenCapture().CaptureWindow(hWnd);
-        if (firstShot == null) return null;
-        images.Add(new Bitmap(firstShot));
+        GetClientRect(hWnd, out var clientRect);
 
-        var clientHeight = GetClientHeight(hWnd);
-        var scrollAmount = clientHeight > 0 ? clientHeight : rect.Height;
-        var totalScrolled = scrollAmount;
+        var pt = new NativeMethods.POINT { X = 0, Y = 0 };
+        NativeMethods.ClientToScreen(hWnd, ref pt);
+
+        var capRect = new Rectangle(pt.X, pt.Y, clientRect.Width, clientRect.Height);
+        if (capRect.Width <= 0 || capRect.Height <= 0)
+            return null;
+
+        NativeMethods.SetForegroundWindow(hWnd);
+        System.Threading.Thread.Sleep(200);
+
+        var images = new List<Bitmap>();
 
         for (var i = 0; i < maxScrolls; i++)
         {
-            SendScrollDown(hWnd);
-            System.Threading.Thread.Sleep(300);
+            var shot = CaptureClientArea(capRect);
+            if (shot == null) break;
+            images.Add(shot);
 
-            var hdc = NativeMethods.GetDC(IntPtr.Zero);
+            SendScrollDown(hWnd);
+            System.Threading.Thread.Sleep(250);
+
+            if (i == 0 && i < maxScrolls - 1)
+            {
+                var checkShot = CaptureClientArea(capRect);
+                if (checkShot != null)
+                {
+                    if (IsContentSame(shot, checkShot, 0.98))
+                    {
+                        checkShot.Dispose();
+                        break;
+                    }
+                    checkShot.Dispose();
+                }
+            }
+        }
+
+        if (images.Count == 0) return null;
+        if (images.Count == 1) return images[0];
+
+        return StitchBitmaps(images);
+    }
+
+    private static Bitmap? CaptureClientArea(Rectangle clientScreenRect)
+    {
+        var hdcSrc = NativeMethods.GetDC(IntPtr.Zero);
+        try
+        {
+            var shot = new Bitmap(clientScreenRect.Width, clientScreenRect.Height,
+                PixelFormat.Format32bppArgb);
+            using var g = Graphics.FromImage(shot);
+            var hdcDest = g.GetHdc();
             try
             {
-                var shot = new Bitmap(rect.Width, rect.Height, PixelFormat.Format32bppArgb);
-                using var g = Graphics.FromImage(shot);
-                var hdcDest = g.GetHdc();
-                try
-                {
-                    NativeMethods.BitBlt(hdcDest, 0, 0, rect.Width, rect.Height,
-                        hdc, rect.Left, rect.Top, NativeMethods.SRCCOPY);
-                }
-                finally
-                {
-                    g.ReleaseHdc(hdcDest);
-                }
-                images.Add(shot);
+                NativeMethods.BitBlt(hdcDest, 0, 0, clientScreenRect.Width, clientScreenRect.Height,
+                    hdcSrc, clientScreenRect.Left, clientScreenRect.Top,
+                    NativeMethods.SRCCOPY | NativeMethods.CAPTUREBLT);
             }
             finally
             {
-                NativeMethods.ReleaseDC(IntPtr.Zero, hdc);
+                g.ReleaseHdc(hdcDest);
+            }
+            return shot;
+        }
+        catch
+        {
+            return null;
+        }
+        finally
+        {
+            NativeMethods.ReleaseDC(IntPtr.Zero, hdcSrc);
+        }
+    }
+
+    private static bool IsContentSame(Bitmap a, Bitmap b, double threshold)
+    {
+        if (a.Width != b.Width || a.Height != b.Height) return false;
+
+        var rect = new Rectangle(0, 0, a.Width, a.Height);
+        var dataA = a.LockBits(rect, ImageLockMode.ReadOnly, a.PixelFormat);
+        var dataB = b.LockBits(rect, ImageLockMode.ReadOnly, b.PixelFormat);
+
+        try
+        {
+            var stride = dataA.Stride;
+            var bytes = stride * a.Height;
+            var bufA = new byte[bytes];
+            var bufB = new byte[bytes];
+            System.Runtime.InteropServices.Marshal.Copy(dataA.Scan0, bufA, 0, bytes);
+            System.Runtime.InteropServices.Marshal.Copy(dataB.Scan0, bufB, 0, bytes);
+
+            var sameCount = 0;
+            for (var i = 0; i < bytes; i++)
+            {
+                if (bufA[i] == bufB[i]) sameCount++;
             }
 
-            totalScrolled += scrollAmount;
-            if (totalScrolled > 100000) break;
+            return (double)sameCount / bytes >= threshold;
         }
-
-        if (images.Count == 1)
-            return images[0];
-
-        return StitchBitmaps(images);
+        finally
+        {
+            a.UnlockBits(dataA);
+            b.UnlockBits(dataB);
+        }
     }
 
     private static Bitmap StitchBitmaps(List<Bitmap> images)
@@ -72,33 +134,45 @@ public class ScrollingCapture
             currentY += img.Height;
         }
 
-        return stitched;
-    }
+        images.ForEach(img => img.Dispose());
 
-    private static int GetClientHeight(IntPtr hWnd)
-    {
-        GetClientRect(hWnd, out var rect);
-        return rect.Height;
+        return stitched;
     }
 
     private static void SendScrollDown(IntPtr hWnd)
     {
         const int WM_MOUSEWHEEL = 0x020A;
-        const int WHEEL_DELTA = 120;
-        var wParam = (IntPtr)((-WHEEL_DELTA) << 16);
+        var wParam = (IntPtr)(unchecked((int)0xFF880000));
         PostMessage(hWnd, WM_MOUSEWHEEL, wParam, IntPtr.Zero);
     }
 
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    public static string GetWindowTitle(IntPtr hWnd)
+    {
+        var length = NativeMethods.GetWindowText(hWnd, 0, 0);
+        if (length <= 0) return hWnd.ToString("X");
+        var lpString = System.Runtime.InteropServices.Marshal.AllocHGlobal((length + 1) * sizeof(char));
+        try
+        {
+            NativeMethods.GetWindowText(hWnd, lpString, length + 1);
+            return System.Runtime.InteropServices.Marshal.PtrToStringAuto(lpString) ?? hWnd.ToString("X");
+        }
+        finally
+        {
+            System.Runtime.InteropServices.Marshal.FreeHGlobal(lpString);
+        }
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "GetClientRect")]
     private static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
 
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "PostMessageW")]
     private static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
     [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
     private struct RECT
     {
         public int Left, Top, Right, Bottom;
+        public int Width => Right - Left;
         public int Height => Bottom - Top;
     }
 }

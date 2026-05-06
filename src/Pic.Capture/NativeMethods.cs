@@ -21,6 +21,10 @@ public static partial class NativeMethods
     internal static partial bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
 
     [LibraryImport(User32)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool ClientToScreen(IntPtr hWnd, ref POINT lpPoint);
+
+    [LibraryImport(User32)]
     public static partial IntPtr GetForegroundWindow();
 
     [LibraryImport(User32)]
@@ -108,6 +112,12 @@ public static partial class NativeMethods
     [LibraryImport(User32)]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool GetCursorPos(out POINT lpPoint);
+
+    [LibraryImport(User32)]
+    internal static partial IntPtr WindowFromPoint(POINT Point);
+
+    [LibraryImport(User32)]
+    internal static partial int GetClassName(IntPtr hWnd, nint lpClassName, int nMaxCount);
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct POINT

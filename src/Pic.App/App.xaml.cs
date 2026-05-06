@@ -169,7 +169,10 @@ public partial class App : System.Windows.Application
         try
         {
             System.Threading.Thread.Sleep(300);
-            var hWnd = Pic.Capture.NativeMethods.GetForegroundWindow();
+            var picker = new Pic.Capture.WindowPicker();
+            var hWnd = picker.PickWindow();
+            if (hWnd == IntPtr.Zero) return;
+
             var sc = new Pic.Capture.ScrollingCapture();
             var bitmap = sc.CaptureScroll(hWnd);
             HandleCaptureResult(bitmap);
