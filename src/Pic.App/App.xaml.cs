@@ -370,22 +370,18 @@ public partial class App : System.Windows.Application
 
         try
         {
+            System.Threading.Thread.Sleep(300);
 
-        System.Threading.Thread.Sleep(300);
+            var selector = new Pic.Capture.RegionSelector();
+            var region = selector.SelectRegion();
+            if (region == null) return;
 
-        var selector = new Pic.Capture.RegionSelector();
-        var preview = selector.SelectAndCapture();
-        preview?.Dispose();
+            var dir = _settings.RecordingsDirectory;
+            Directory.CreateDirectory(dir);
+            var filename = Path.Combine(dir, $"recording_{DateTime.Now:yyyyMMdd_HHmmss}.mp4");
 
-        var rect = System.Windows.Forms.Cursor.Position;
-        var captureRegion = new System.Drawing.Rectangle(rect.X - 200, rect.Y - 150, 400, 300);
-
-        var dir = _settings.RecordingsDirectory;
-        Directory.CreateDirectory(dir);
-        var filename = Path.Combine(dir, $"recording_{DateTime.Now:yyyyMMdd_HHmmss}.mp4");
-
-        _recorder = new Pic.Recorder.ScreenRecorder(captureRegion, filename, _settings.RecordingFrameRate);
-        _recorder.RecordingStarted += (s, path) =>
+            _recorder = new Pic.Recorder.ScreenRecorder(region.Value, filename, _settings.RecordingFrameRate);
+            _recorder.RecordingStarted += (s, path) =>
         {
             Dispatcher.Invoke(() =>
                 _notifyIcon?.ShowBalloonTip(2000, "Pic", "Recording started...",

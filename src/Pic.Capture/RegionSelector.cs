@@ -9,6 +9,29 @@ public class RegionSelector
     private Rectangle[] _screens = Array.Empty<Rectangle>();
     private Rectangle _selectedRegion;
 
+    public Rectangle? SelectRegion()
+    {
+        var screens = Screen.AllScreens;
+        _screens = new Rectangle[screens.Length];
+        for (var i = 0; i < screens.Length; i++)
+            _screens[i] = screens[i].Bounds;
+
+        _selectedRegion = Rectangle.Empty;
+
+        using var overlayForm = new RegionOverlayForm(_screens);
+        overlayForm.RegionSelected += (s, region) =>
+        {
+            _selectedRegion = region;
+        };
+
+        overlayForm.ShowDialog();
+
+        if (_selectedRegion.Width > 0 && _selectedRegion.Height > 0)
+            return _selectedRegion;
+
+        return null;
+    }
+
     public Bitmap? SelectAndCapture()
     {
         var screens = Screen.AllScreens;
@@ -63,8 +86,9 @@ internal class RegionOverlayForm : Form
         TopMost = true;
         ShowInTaskbar = false;
         Cursor = Cursors.Cross;
-        BackColor = Color.Black;
-        Opacity = 0.3;
+        BackColor = Color.Fuchsia;
+        AllowTransparency = true;
+        TransparencyKey = Color.Fuchsia;
 
         DoubleBuffered = true;
         KeyDown += OverlayForm_KeyDown;
@@ -123,9 +147,14 @@ internal class RegionOverlayForm : Form
 
     private void OverlayForm_Paint(object? sender, PaintEventArgs e)
     {
+        // Draw the dimming overlay
+        using var dimBrush = new SolidBrush(Color.FromArgb(90, 0, 0, 0));
+        e.Graphics.FillRectangle(dimBrush, ClientRectangle);
+
         if (_currentSelection.Width > 0 && _currentSelection.Height > 0)
         {
-            using var clearBrush = new SolidBrush(Color.FromArgb(128, 255, 255, 255));
+            // Clear the selection area to show the original content
+            using var clearBrush = new SolidBrush(Color.FromArgb(140, 255, 255, 255));
             var region = new Region(new Rectangle(0, 0, Width, Height));
             region.Exclude(_currentSelection);
             e.Graphics.FillRegion(clearBrush, region);
